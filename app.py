@@ -52,7 +52,7 @@ def analyze_risk(item_text, price):
 
 # --- THE USER INTERFACE (The "Agent") ---
 st.title("🤖 Shopping Agent")
-st.caption("Powered by [Your Bank] Embedded Lending Protocol")
+st.caption("Powered by ZINIA Embedded Lending Protocol")
 
 # Initialize Chat History
 if "messages" not in st.session_state:
