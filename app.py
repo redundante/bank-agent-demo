@@ -3,9 +3,7 @@ import time
 import re
 import textwrap 
 
-# --- CONFIGURATION & CSS (SAME AS BEFORE) ---
-
-# [CSS BLOCK REMAINS UNCHANGED]
+# --- CONFIGURATION & CSS (REMAINS UNCHANGED) ---
 
 st.markdown("""
 <style>
@@ -19,8 +17,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- LOGIC & SESSION STATE (SAME AS BEFORE) ---
-# [Logic and Session State setup remains unchanged, hidden for brevity]
+# --- LOGIC & SESSION STATE (REMAINS UNCHANGED) ---
 
 def get_zinia_decision(query, price):
     query_lower = query.lower()
@@ -33,7 +30,7 @@ def get_zinia_decision(query, price):
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# --- UI: SIDEBAR (SAME AS BEFORE) ---
+# --- UI: SIDEBAR (REMAINS UNCHANGED) ---
 with st.sidebar:
     st.markdown("### ChatGPT 4o")
     st.markdown("---")
@@ -43,17 +40,15 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# --- CHAT HISTORY RENDERER (FIXED) ---
+# --- CHAT HISTORY RENDERER (REMAINS UNCHANGED) ---
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"], avatar=msg.get("avatar")):
-        # If the message is marked as a widget, we MUST use st.markdown(..., unsafe_allow_html=True)
-        # Otherwise, use st.write for safe text display.
         if msg.get("type") == "zinia_widget":
             st.markdown(msg["content"], unsafe_allow_html=True) 
         else:
             st.write(msg["content"])
 
-# --- INPUT LOOP (FIXED) ---
+# --- INPUT LOOP (FIXED LOGIC) ---
 if prompt := st.chat_input("Ask ChatGPT to buy something..."):
     
     # 1. User Message (Unchanged)
@@ -78,16 +73,17 @@ if prompt := st.chat_input("Ask ChatGPT to buy something..."):
         approved, risk_class = get_zinia_decision(prompt, price)
 
         if approved:
+            # FIX: Combine intro text and HTML widget into ONE string for unified rendering
+            
             intro = "I've generated a financing offer using your linked Zinia account."
             
-            # 2a. Display Intro Text Immediately
-            st.write(intro)
-            
-            # 2b. Generate HTML (dedented)
             installment = price / 3
             logo_url = "https://www.zinia.com/assets/logo_topbar/ZiniaBySantanderTopbarCustomer.svg"
             
-            zinia_html = textwrap.dedent(f"""
+            # Use a unified HTML block containing both the text and the widget structure
+            full_response_html = textwrap.dedent(f"""
+                <p style="color:#ECECF1; margin-bottom: 20px;">{intro}</p>
+                
                 <div class="zinia-wrapper">
                     <div class="zinia-card">
                         <div class="zinia-header-strip">
@@ -120,12 +116,11 @@ if prompt := st.chat_input("Ask ChatGPT to buy something..."):
                 </div>
             """)
             
-            # 2c. Display Widget HTML Immediately (FIXED: Ensure the flag is here)
-            st.markdown(zinia_html, unsafe_allow_html=True)
+            # 2c. Display Widget HTML Immediately
+            st.markdown(full_response_html, unsafe_allow_html=True)
             
-            # 3. Save History: Save the text and the widget separately.
-            st.session_state.messages.append({"role": "assistant", "content": intro, "avatar": "✨", "type": "text"})
-            st.session_state.messages.append({"role": "assistant", "content": zinia_html, "type": "zinia_widget", "avatar": "✨"})
+            # 3. Save History: Save the entire HTML block as ONE widget message
+            st.session_state.messages.append({"role": "assistant", "content": full_response_html, "type": "zinia_widget", "avatar": "✨"})
         
         else:
             decline = "Transaction declined by Zinia risk engine."
